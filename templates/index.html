@@ -3,38 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Autenticación y Seguridad</title>
+    <title>Sistema de Autenticación y Administración</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: url('/static/fondo.jpg') no-repeat center center fixed; background-size: cover; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .card { background: rgba(255, 255, 255, 0.95); padding: 35px 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 520px; text-align: center; }
-        .card h2 { color: #333333; margin-bottom: 8px; font-size: 24px; font-weight: 600; }
-        .card p.subtitle { color: #666666; font-size: 14px; margin-bottom: 20px; }
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; font-size: 12px; color: #555555; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; outline: none; }
-        .btn-container { display: flex; gap: 10px; margin-top: 15px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .card { background: rgba(255, 255, 255, 0.95); padding: 30px 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 560px; text-align: center; }
+        .card h2 { color: #333333; margin-bottom: 5px; font-size: 22px; font-weight: 600; }
+        .card p.subtitle { color: #666666; font-size: 13px; margin-bottom: 18px; }
+        .input-group { margin-bottom: 12px; text-align: left; }
+        .input-group label { display: block; font-size: 11px; color: #555555; margin-bottom: 4px; font-weight: bold; text-transform: uppercase; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; outline: none; }
+        .btn-container { display: flex; gap: 8px; margin-top: 12px; }
+        button { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
         .btn-login { background-color: #2a5298; color: white; }
         .btn-register { background-color: #e0e0e0; color: #333333; }
-        #mensaje { margin-top: 15px; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600; display: none; }
+        .btn-forgot { background: none; border: none; color: #2a5298; font-size: 12px; cursor: pointer; margin-top: 10px; text-decoration: underline; }
+        #mensaje { margin-top: 12px; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600; display: none; }
         .exito { background-color: #d4edda; color: #155724; display: block !important; }
         .error { background-color: #f8d7da; color: #721c24; display: block !important; }
         
-        #panel-seguridad { display: none; margin-top: 20px; text-align: left; border-top: 2px solid #eee; padding-top: 15px; max-height: 320px; overflow-y: auto; }
-        .log-item { font-size: 12px; padding: 8px; margin-bottom: 6px; border-radius: 4px; border-left: 4px solid #ccc; background: #f9f9f9; }
+        /* Modulos Internos por Roles */
+        #panel-seguridad { display: none; margin-top: 18px; text-align: left; border-top: 2px solid #eee; padding-top: 12px; max-height: 320px; overflow-y: auto; }
+        .seccion-modulo { display: none; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e9ecef; }
+        .log-item { font-size: 11px; padding: 6px; margin-bottom: 5px; border-radius: 4px; border-left: 3px solid #ccc; background: #ffffff; }
         .log-exito { border-left-color: #28a745; background: #eef9f0; }
         .log-alerta { border-left-color: #dc3545; background: #fdf2f2; color: #721c24; font-weight: bold; }
-        .user-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #f1f3f5; padding: 6px 10px; border-radius: 4px; font-size: 12px; }
-        .user-item select { padding: 3px; font-size: 11px; }
-        .btn-block { background-color: #dc3545; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #ffffff; padding: 6px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #dee2e6; }
+        .user-item select { padding: 2px; font-size: 11px; }
+        .btn-danger { background-color: #dc3545; color: white; padding: 3px 6px; font-size: 10px; border-radius: 4px; border: none; cursor: pointer; margin-left: 3px; }
+        .btn-warning { background-color: #ffc107; color: #333; padding: 3px 6px; font-size: 10px; border-radius: 4px; border: none; cursor: pointer; margin-left: 3px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>Sistema de Control y Registro</h2>
-    <p class="subtitle">Módulo de Seguridad y Auditoría</p>
+    <p class="subtitle">Módulo de Seguridad, Permisos y Asistencia</p>
 
     <div id="form-login">
         <div class="input-group">
@@ -51,19 +55,37 @@
             <button class="btn-register" onclick="enviarDatos('/registrar')">Registrar</button>
             <button class="btn-login" onclick="enviarDatos('/login')">Ingresar</button>
         </div>
+        <button class="btn-forgot" onclick="solicitarAyuda()">¿Olvidaste tu contraseña o usuario?</button>
     </div>
 
     <div id="mensaje"></div>
 
+    <!-- Módulo Interno según el Rol -->
     <div id="panel-seguridad">
-        <h3 style="color: #2a5298; font-size: 15px; margin-bottom: 10px;">🛡️ Centro de Control de Seguridad</h3>
-        
-        <div id="seccion-gestion" style="margin-bottom: 15px;">
-            <p style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">Gestión de Permisos y Delegación de Admins:</p>
+        <!-- Vista para Rol Lectura -->
+        <div id="modulo-lectura" class="seccion-modulo">
+            <h4 style="color: #2a5298;">📖 Vista de Solo Lectura</h4>
+            <p style="font-size: 12px; margin-top: 5px;">Bienvenido al sistema. Solo tienes permisos para consultar información general.</p>
+        </div>
+
+        <!-- Vista para Rol Edición -->
+        <div id="modulo-edicion" class="seccion-modulo">
+            <h4 style="color: #28a745;">✏️ Módulo de Edición Habilitado</h4>
+            <p style="font-size: 12px; margin-top: 5px;">Tienes permisos para modificar registros y datos operativos del sistema.</p>
+        </div>
+
+        <!-- Vista para Administrador / Guardián -->
+        <div id="seccion-gestion" style="margin-bottom: 12px; display: none;">
+            <p style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">Gestión de Usuarios, Permisos y Eliminación:</p>
             <div id="lista-usuarios"></div>
         </div>
 
-        <p style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">Historial de Auditoría (IPs, Horas y Roles):</p>
+        <div id="seccion-solicitudes" style="margin-bottom: 12px; display: none;">
+            <p style="font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #d9534f;">🚨 Solicitudes de Recuperación de Ayuda:</p>
+            <div id="lista-solicitudes"></div>
+        </div>
+
+        <p style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">Historial de Auditoría en Tiempo Real:</p>
         <div id="historial-logs"></div>
     </div>
 </div>
@@ -108,9 +130,23 @@ async function enviarDatos(ruta) {
             mensajeDiv.className = "error";
         }
     } catch (err) {
-        mensajeDiv.innerText = "Error de conexión con el servidor.";
+        mensajeDiv.innerText = "Error de conexión.";
         mensajeDiv.className = "error";
     }
+}
+
+async function solicitarAyuda() {
+    const nombre = prompt("Ingresa tu nombre de usuario para solicitar asistencia al Administrador:");
+    if (!nombre) return;
+
+    const respuesta = await fetch('/solicitar_recuperacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre })
+    });
+
+    const res = await respuesta.json();
+    alert(res.mensaje || res.error);
 }
 
 async function cargarAuditoria() {
@@ -126,11 +162,23 @@ async function cargarAuditoria() {
     const panel = document.getElementById('panel-seguridad');
     panel.style.display = 'block';
 
-    const divUsuarios = document.getElementById('lista-usuarios');
-    const seccionGestion = document.getElementById('seccion-gestion');
-    
-    if (rolUsuario === 'admin') {
-        seccionGestion.style.display = 'block';
+    // Ocultar todos los módulos primero
+    document.getElementById('modulo-lectura').style.display = 'none';
+    document.getElementById('modulo-edicion').style.display = 'none';
+    document.getElementById('seccion-gestion').style.display = 'none';
+    document.getElementById('seccion-solicitudes').style.display = 'none';
+
+    // Mostrar según el Rol
+    if (rolUsuario === 'lectura') {
+        document.getElementById('modulo-lectura').style.display = 'block';
+    } else if (rolUsuario === 'edicion') {
+        document.getElementById('modulo-edicion').style.display = 'block';
+    } else if (rolUsuario === 'admin') {
+        document.getElementById('seccion-gestion').style.display = 'block';
+        document.getElementById('seccion-solicitudes').style.display = 'block';
+
+        // Renderizar Usuarios
+        const divUsuarios = document.getElementById('lista-usuarios');
         divUsuarios.innerHTML = '';
         datos.usuarios.forEach(u => {
             if (u.nombre !== usuarioActual) {
@@ -142,18 +190,34 @@ async function cargarAuditoria() {
                                 <option value="lectura" ${u.rol === 'lectura' ? 'selected' : ''}>Lectura</option>
                                 <option value="edicion" ${u.rol === 'edicion' ? 'selected' : ''}>Edición</option>
                                 <option value="guardian" ${u.rol === 'guardian' ? 'selected' : ''}>Guardián</option>
-                                <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>👑 Administrador</option>
+                                <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>👑 Admin</option>
                             </select>
-                            <button class="btn-block" onclick="bloquearUsuario('${u.nombre}')">Bloquear</button>
+                            <button class="btn-warning" onclick="resetearClave('${u.nombre}')">Reset Clave</button>
+                            <button class="btn-danger" onclick="eliminarUsuario('${u.nombre}')">Eliminar</button>
                         </div>
                     </div>
                 `;
             }
         });
-    } else {
-        seccionGestion.style.display = 'none';
+
+        // Renderizar Solicitudes de Recuperación
+        const divSol = document.getElementById('lista-solicitudes');
+        divSol.innerHTML = '';
+        if (datos.solicitudes.length === 0) {
+            divSol.innerHTML = '<p style="font-size:11px; color:#777;">No hay solicitudes pendientes.</p>';
+        } else {
+            datos.solicitudes.forEach(s => {
+                divSol.innerHTML += `
+                    <div class="user-item">
+                        <span><strong>${s.usuario}</strong> (${s.fecha}) - Estado: <i>${s.estado}</i></span>
+                        <button class="btn-warning" onclick="resetearClave('${s.usuario}')">Asistir / Resetear</button>
+                    </div>
+                `;
+            });
+        }
     }
 
+    // Renderizar Logs de Auditoría
     const divLogs = document.getElementById('historial-logs');
     divLogs.innerHTML = '';
     datos.historial.forEach(log => {
@@ -173,18 +237,34 @@ async function actualizarRol(usuarioObjetivo, nuevoRol) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ admin: usuarioActual, usuario: usuarioObjetivo, rol: nuevoRol })
     });
-    alert(`Permiso de ${usuarioObjetivo} actualizado a: ${nuevoRol}`);
+    alert(`Permiso actualizado.`);
     cargarAuditoria();
 }
 
-async function bloquearUsuario(usuarioObjetivo) {
-    if (!confirm(`¿Bloquear acceso a ${usuarioObjetivo}?`)) return;
-    await fetch('/bloquear_intruso', {
+async function resetearClave(usuarioObjetivo) {
+    const nueva = prompt(`Nueva contraseña para ${usuarioObjetivo}:`, '123456');
+    if (!nueva) return;
+
+    const res = await fetch('/resetear_clave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin: usuarioActual, usuario: usuarioObjetivo, nueva_clave: nueva })
+    });
+    const r = await res.json();
+    alert(r.mensaje || r.error);
+    cargarAuditoria();
+}
+
+async function eliminarUsuario(usuarioObjetivo) {
+    if (!confirm(`¿Eliminar definitivamente al usuario ${usuarioObjetivo}? Esta acción no se puede deshacer.`)) return;
+
+    const res = await fetch('/eliminar_usuario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ admin: usuarioActual, usuario: usuarioObjetivo })
     });
-    alert(`Usuario ${usuarioObjetivo} bloqueado.`);
+    const r = await res.json();
+    alert(r.mensaje || r.error);
     cargarAuditoria();
 }
 </script>
