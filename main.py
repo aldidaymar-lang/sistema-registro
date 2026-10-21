@@ -1,196 +1,273 @@
- from flask import Flask, request, jsonify, render_template
-from datetime import datetime
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Autenticación y Administración</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: url('/static/fondo.jpg') no-repeat center center fixed; background-size: cover; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: rgba(255, 255, 255, 0.95); padding: 30px 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 560px; text-align: center; }
+        .card h2 { color: #333333; margin-bottom: 5px; font-size: 22px; font-weight: 600; }
+        .card p.subtitle { color: #666666; font-size: 13px; margin-bottom: 18px; }
+        .input-group { margin-bottom: 12px; text-align: left; }
+        .input-group label { display: block; font-size: 11px; color: #555555; margin-bottom: 4px; font-weight: bold; text-transform: uppercase; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #cccccc; border-radius: 6px; font-size: 13px; outline: none; }
+        .btn-container { display: flex; gap: 8px; margin-top: 12px; }
+        button { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .btn-login { background-color: #2a5298; color: white; }
+        .btn-register { background-color: #e0e0e0; color: #333333; }
+        .btn-forgot { background: none; border: none; color: #2a5298; font-size: 12px; cursor: pointer; margin-top: 10px; text-decoration: underline; }
+        #mensaje { margin-top: 12px; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600; display: none; }
+        .exito { background-color: #d4edda; color: #155724; display: block !important; }
+        .error { background-color: #f8d7da; color: #721c24; display: block !important; }
+        
+        /* Modulos Internos por Roles */
+        #panel-seguridad { display: none; margin-top: 18px; text-align: left; border-top: 2px solid #eee; padding-top: 12px; max-height: 320px; overflow-y: auto; }
+        .seccion-modulo { display: none; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e9ecef; }
+        .log-item { font-size: 11px; padding: 6px; margin-bottom: 5px; border-radius: 4px; border-left: 3px solid #ccc; background: #ffffff; }
+        .log-exito { border-left-color: #28a745; background: #eef9f0; }
+        .log-alerta { border-left-color: #dc3545; background: #fdf2f2; color: #721c24; font-weight: bold; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #ffffff; padding: 6px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #dee2e6; }
+        .user-item select { padding: 2px; font-size: 11px; }
+        .btn-danger { background-color: #dc3545; color: white; padding: 3px 6px; font-size: 10px; border-radius: 4px; border: none; cursor: pointer; margin-left: 3px; }
+        .btn-warning { background-color: #ffc107; color: #333; padding: 3px 6px; font-size: 10px; border-radius: 4px; border: none; cursor: pointer; margin-left: 3px; }
+    </style>
+</head>
+<body>
 
-app = Flask(__name__)
+<div class="card">
+    <h2>Sistema de Control y Registro</h2>
+    <p class="subtitle">Módulo de Seguridad, Permisos y Asistencia</p>
 
-# Usuarios iniciales con roles y estados
-usuarios = {
-    "aldimar": {"clave": "1234", "rol": "admin", "estado": "activo"}
+    <div id="form-login">
+        <div class="input-group">
+            <label for="nombre">Usuario</label>
+            <input type="text" id="nombre" placeholder="Ej. aldimar">
+        </div>
+
+        <div class="input-group">
+            <label for="clave">Contraseña</label>
+            <input type="password" id="clave" placeholder="••••••••">
+        </div>
+
+        <div class="btn-container">
+            <button class="btn-register" onclick="enviarDatos('/registrar')">Registrar</button>
+            <button class="btn-login" onclick="enviarDatos('/login')">Ingresar</button>
+        </div>
+        <button class="btn-forgot" onclick="solicitarAyuda()">¿Olvidaste tu contraseña o usuario?</button>
+    </div>
+
+    <div id="mensaje"></div>
+
+    <!-- Módulo Interno según el Rol -->
+    <div id="panel-seguridad">
+        <!-- Vista para Rol Lectura -->
+        <div id="modulo-lectura" class="seccion-modulo">
+            <h4 style="color: #2a5298;">📖 Vista de Solo Lectura</h4>
+            <p style="font-size: 12px; margin-top: 5px;">Bienvenido al sistema. Solo tienes permisos para consultar información general.</p>
+        </div>
+
+        <!-- Vista para Rol Edición -->
+        <div id="modulo-edicion" class="seccion-modulo">
+            <h4 style="color: #28a745;">✏️ Módulo de Edición Habilitado</h4>
+            <p style="font-size: 12px; margin-top: 5px;">Tienes permisos para modificar registros y datos operativos del sistema.</p>
+        </div>
+
+        <!-- Vista para Administrador / Guardián -->
+        <div id="seccion-gestion" style="margin-bottom: 12px; display: none;">
+            <p style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">Gestión de Usuarios, Permisos y Eliminación:</p>
+            <div id="lista-usuarios"></div>
+        </div>
+
+        <div id="seccion-solicitudes" style="margin-bottom: 12px; display: none;">
+            <p style="font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #d9534f;">🚨 Solicitudes de Recuperación de Ayuda:</p>
+            <div id="lista-solicitudes"></div>
+        </div>
+
+        <p style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">Historial de Auditoría en Tiempo Real:</p>
+        <div id="historial-logs"></div>
+    </div>
+</div>
+
+<script>
+let usuarioActual = '';
+let rolUsuario = '';
+
+async function enviarDatos(ruta) {
+    const nombre = document.getElementById('nombre').value;
+    const clave = document.getElementById('clave').value;
+    const mensajeDiv = document.getElementById('mensaje');
+
+    mensajeDiv.className = '';
+    
+    if (!nombre || !clave) {
+        mensajeDiv.innerText = "Por favor completa ambos campos.";
+        mensajeDiv.className = "error";
+        return;
+    }
+
+    try {
+        const respuesta = await fetch(ruta, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, clave })
+        });
+
+        const resultado = await respuesta.json();
+
+        if (respuesta.ok) {
+            mensajeDiv.innerText = resultado.mensaje;
+            mensajeDiv.className = "exito";
+
+            if (ruta === '/login') {
+                usuarioActual = resultado.usuario;
+                rolUsuario = resultado.rol;
+                cargarAuditoria();
+            }
+        } else {
+            mensajeDiv.innerText = resultado.error;
+            mensajeDiv.className = "error";
+        }
+    } catch (err) {
+        mensajeDiv.innerText = "Error de conexión.";
+        mensajeDiv.className = "error";
+    }
 }
 
-# Auditoría, bloqueados y solicitudes de recuperación
-historial_accesos = []
-bloqueados = set()
-solicitudes_recuperacion = []
+async function solicitarAyuda() {
+    const nombre = prompt("Ingresa tu nombre de usuario para solicitar asistencia al Administrador:");
+    if (!nombre) return;
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+    const respuesta = await fetch('/solicitar_recuperacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre })
+    });
 
-@app.route('/registrar', methods=['POST'])
-def registrar_usuario():
-    data = request.get_json() or {}
-    nombre = data.get('nombre')
-    clave = data.get('clave')
-    
-    if not nombre or not clave:
-        return jsonify({"error": "Faltan datos"}), 400
-        
-    if nombre in usuarios:
-        return jsonify({"error": "El usuario ya existe"}), 400
+    const res = await respuesta.json();
+    alert(res.mensaje || res.error);
+}
 
-    usuarios[nombre] = {"clave": clave, "rol": "lectura", "estado": "activo"}
-    
-    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    historial_accesos.append({
-        "usuario": nombre,
-        "evento": "Registro de usuario",
-        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "ip": ip,
-        "tipo": "info"
-    })
-    
-    return jsonify({"mensaje": "Usuario registrado con éxito (Rol: Lectura)"}), 200
+async function cargarAuditoria() {
+    const respuesta = await fetch('/obtener_auditoria', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin: usuarioActual })
+    });
 
-@app.route('/login', methods=['POST'])
-def iniciar_seccion():
-    data = request.get_json() or {}
-    nombre = data.get('nombre')
-    clave = data.get('clave')
-    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    fecha_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if (!respuesta.ok) return;
 
-    if nombre in bloqueados or ip in bloqueados:
-        return jsonify({"error": "Acceso bloqueado por seguridad."}), 403
+    const datos = await respuesta.json();
+    const panel = document.getElementById('panel-seguridad');
+    panel.style.display = 'block';
 
-    if nombre in usuarios and usuarios[nombre]["clave"] == clave:
-        rol = usuarios[nombre]["rol"]
-        historial_accesos.append({
-            "usuario": nombre,
-            "evento": "Inicio de Sesión Exitoso",
-            "fecha": fecha_hora,
-            "ip": ip,
-            "tipo": "exito"
-        })
-        return jsonify({
-            "mensaje": f"¡Bienvenido {nombre}!",
-            "usuario": nombre,
-            "rol": rol
-        }), 200
-    else:
-        historial_accesos.append({
-            "usuario": nombre,
-            "evento": "ALERTA: Intento de Intrusión (Clave Incorrecta)",
-            "fecha": fecha_hora,
-            "ip": ip,
-            "tipo": "alerta"
-        })
-        return jsonify({"error": "Credenciales incorrectas."}), 401
+    // Ocultar todos los módulos primero
+    document.getElementById('modulo-lectura').style.display = 'none';
+    document.getElementById('modulo-edicion').style.display = 'none';
+    document.getElementById('seccion-gestion').style.display = 'none';
+    document.getElementById('seccion-solicitudes').style.display = 'none';
 
-@app.route('/solicitar_recuperacion', methods=['POST'])
-def solicitar_recuperacion():
-    data = request.get_json() or {}
-    nombre = data.get('nombre')
-    
-    if not nombre:
-        return jsonify({"error": "Indique su usuario para recuperación."}), 400
+    // Mostrar según el Rol
+    if (rolUsuario === 'lectura') {
+        document.getElementById('modulo-lectura').style.display = 'block';
+    } else if (rolUsuario === 'edicion') {
+        document.getElementById('modulo-edicion').style.display = 'block';
+    } else if (rolUsuario === 'admin') {
+        document.getElementById('seccion-gestion').style.display = 'block';
+        document.getElementById('seccion-solicitudes').style.display = 'block';
 
-    fecha_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    solicitudes_recuperacion.append({
-        "usuario": nombre,
-        "fecha": fecha_hora,
-        "estado": "Pendiente"
-    })
+        // Renderizar Usuarios
+        const divUsuarios = document.getElementById('lista-usuarios');
+        divUsuarios.innerHTML = '';
+        datos.usuarios.forEach(u => {
+            if (u.nombre !== usuarioActual) {
+                divUsuarios.innerHTML += `
+                    <div class="user-item">
+                        <span><strong>${u.nombre}</strong></span>
+                        <div>
+                            <select onchange="actualizarRol('${u.nombre}', this.value)">
+                                <option value="lectura" ${u.rol === 'lectura' ? 'selected' : ''}>Lectura</option>
+                                <option value="edicion" ${u.rol === 'edicion' ? 'selected' : ''}>Edición</option>
+                                <option value="guardian" ${u.rol === 'guardian' ? 'selected' : ''}>Guardián</option>
+                                <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>👑 Admin</option>
+                            </select>
+                            <button class="btn-warning" onclick="resetearClave('${u.nombre}')">Reset Clave</button>
+                            <button class="btn-danger" onclick="eliminarUsuario('${u.nombre}')">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
 
-    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    historial_accesos.append({
-        "usuario": nombre,
-        "evento": "Solicitud de Recuperación de Credenciales",
-        "fecha": fecha_hora,
-        "ip": ip,
-        "tipo": "alerta"
-    })
+        // Renderizar Solicitudes de Recuperación
+        const divSol = document.getElementById('lista-solicitudes');
+        divSol.innerHTML = '';
+        if (datos.solicitudes.length === 0) {
+            divSol.innerHTML = '<p style="font-size:11px; color:#777;">No hay solicitudes pendientes.</p>';
+        } else {
+            datos.solicitudes.forEach(s => {
+                divSol.innerHTML += `
+                    <div class="user-item">
+                        <span><strong>${s.usuario}</strong> (${s.fecha}) - Estado: <i>${s.estado}</i></span>
+                        <button class="btn-warning" onclick="resetearClave('${s.usuario}')">Asistir / Resetear</button>
+                    </div>
+                `;
+            });
+        }
+    }
 
-    return jsonify({"mensaje": "Solicitud enviada al Administrador. Espere su asistencia."}), 200
+    // Renderizar Logs de Auditoría
+    const divLogs = document.getElementById('historial-logs');
+    divLogs.innerHTML = '';
+    datos.historial.forEach(log => {
+        let claseCss = log.tipo === 'alerta' ? 'log-alerta' : (log.tipo === 'exito' ? 'log-exito' : 'log-item');
+        divLogs.innerHTML += `
+            <div class="log-item ${claseCss}">
+                <div><strong>${log.evento}</strong> - User: <i>${log.usuario}</i></div>
+                <div>🕒 ${log.fecha} | 🌐 IP: ${log.ip}</div>
+            </div>
+        `;
+    });
+}
 
-@app.route('/obtener_auditoria', methods=['POST'])
-def obtener_auditoria():
-    data = request.get_json() or {}
-    admin_req = data.get('admin')
+async function actualizarRol(usuarioObjetivo, nuevoRol) {
+    await fetch('/cambiar_rol', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin: usuarioActual, usuario: usuarioObjetivo, rol: nuevoRol })
+    });
+    alert(`Permiso actualizado.`);
+    cargarAuditoria();
+}
 
-    rol_solicitante = usuarios.get(admin_req, {}).get('rol')
-    if rol_solicitante not in ['admin', 'guardian']:
-        return jsonify({"error": "Sin permisos de auditoría."}), 403
+async function resetearClave(usuarioObjetivo) {
+    const nueva = prompt(`Nueva contraseña para ${usuarioObjetivo}:`, '123456');
+    if (!nueva) return;
 
-    lista_usuarios = [{"nombre": u, "rol": datos["rol"]} for u, datos in usuarios.items()]
+    const res = await fetch('/resetear_clave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin: usuarioActual, usuario: usuarioObjetivo, nueva_clave: nueva })
+    });
+    const r = await res.json();
+    alert(r.mensaje || r.error);
+    cargarAuditoria();
+}
 
-    return jsonify({
-        "historial": historial_accesos[::-1],
-        "usuarios": lista_usuarios,
-        "solicitudes": solicitudes_recuperacion[::-1],
-        "mi_rol": rol_solicitante
-    }), 200
+async function eliminarUsuario(usuarioObjetivo) {
+    if (!confirm(`¿Eliminar definitivamente al usuario ${usuarioObjetivo}? Esta acción no se puede deshacer.`)) return;
 
-@app.route('/resetear_clave', methods=['POST'])
-def resetear_clave():
-    data = request.get_json() or {}
-    admin_req = data.get('admin')
-    usuario_objetivo = data.get('usuario')
-    nueva_clave = data.get('nueva_clave', '123456')
+    const res = await fetch('/eliminar_usuario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin: usuarioActual, usuario: usuarioObjetivo })
+    });
+    const r = await res.json();
+    alert(r.mensaje || r.error);
+    cargarAuditoria();
+}
+</script>
 
-    if usuarios.get(admin_req, {}).get('rol') != 'admin':
-        return jsonify({"error": "Acceso denegado."}), 403
-
-    if usuario_objetivo in usuarios:
-        usuarios[usuario_objetivo]['clave'] = nueva_clave
-        # Marcar solicitud como atendida
-        for sol in solicitudes_recuperacion:
-            if sol['usuario'] == usuario_objetivo:
-                sol['estado'] = 'Atendida'
-        return jsonify({"mensaje": f"Clave de {usuario_objetivo} reseteada a: {nueva_clave}"}), 200
-
-    return jsonify({"error": "Usuario no encontrado."}), 404
-
-@app.route('/cambiar_rol', methods=['POST'])
-def cambiar_rol():
-    data = request.get_json() or {}
-    admin_req = data.get('admin')
-    usuario_objetivo = data.get('usuario')
-    nuevo_rol = data.get('rol')
-
-    if usuarios.get(admin_req, {}).get('rol') != 'admin':
-        return jsonify({"error": "Acceso denegado."}), 403
-
-    if usuario_objetivo in usuarios:
-        usuarios[usuario_objetivo]['rol'] = nuevo_rol
-        return jsonify({"mensaje": f"Rol actualizado a {nuevo_rol}"}), 200
-    
-    return jsonify({"error": "Usuario no encontrado"}), 404
-
-@app.route('/eliminar_usuario', methods=['POST'])
-def eliminar_usuario():
-    data = request.get_json() or {}
-    admin_req = data.get('admin')
-    usuario_objetivo = data.get('usuario')
-
-    if usuarios.get(admin_req, {}).get('rol') != 'admin':
-        return jsonify({"error": "Acceso denegado. Solo Administradores pueden eliminar usuarios."}), 403
-
-    if usuario_objetivo in usuarios:
-        del usuarios[usuario_objetivo]
-        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        historial_accesos.append({
-            "usuario": admin_req,
-            "evento": f"Eliminación definitiva del usuario '{usuario_objetivo}'",
-            "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "ip": ip,
-            "tipo": "alerta"
-        })
-        return jsonify({"mensaje": f"Usuario {usuario_objetivo} eliminado permanentemente."}), 200
-
-    return jsonify({"error": "Usuario no encontrado"}), 404
-
-@app.route('/bloquear_intruso', methods=['POST'])
-def bloquear_intruso():
-    data = request.get_json() or {}
-    admin_req = data.get('admin')
-    usuario_objetivo = data.get('usuario')
-
-    if usuarios.get(admin_req, {}).get('rol') != 'admin':
-        return jsonify({"error": "Acceso denegado."}), 403
-
-    bloqueados.add(usuario_objetivo)
-    return jsonify({"mensaje": f"Usuario {usuario_objetivo} bloqueado."}), 200
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+</body>
+</html>
